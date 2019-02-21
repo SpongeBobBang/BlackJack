@@ -1,0 +1,243 @@
+from turtle import*
+from tkinter import*
+from random import*
+
+def init():
+    global turtlemoving
+    turtlemoving=False
+    incorrectguesses=0
+    times=0
+    wordentered=False
+    while wordentered==False:
+        valid=0
+        #word=simpledialog.askstring('Hangman game','Enter a word')
+        word=randomword()
+        length=len(word)
+        for i in range(length):
+            if word[i]>='a' and word[i]<='z':
+                valid=valid+1
+        if valid==length:
+            wordentered=True
+    return length,word,incorrectguesses,times
+def randomword():
+    w=open('dict.txt','r')
+    content=w.readlines()
+    randline=content[randint(0,4093)]
+    randword=''
+    try:
+        for i in range(20):
+            if randline[i]>='a' and randline[i]<='z':
+                randword=randword+randline[i]
+    except:x=0
+    return randword
+
+    
+def hanger(t):
+    t.ht()
+    t.penup()
+    t.goto(-280,-200)
+    t.pendown()
+    t.forward(200)
+    t.penup()
+    t.backward(150)
+    t.seth(90)
+    t.pendown()
+    t.forward(400)
+    t.seth(0)
+    t.forward(100)
+    t.seth(270)
+    t.forward(50)
+    t.seth(180)
+
+def incorrect(times,t):
+    global turtlemoving
+    if times==1:
+        turtlemoving=True
+        t.circle(25)
+        t.penup()
+        t.seth(270)
+        t.forward(50)
+        turtlemoving=False
+    if times==2:
+        turtlemoving=True
+        t.pendown()
+        t.forward(100)
+        t.seth(90)
+        t.forward(50)
+        turtlemoving=False
+    if times==3:
+        turtlemoving=True
+        t.seth(150)
+        t.forward(50)
+        t.seth(330)
+        t.forward(50)
+        turtlemoving=False
+    if times==4:
+        turtlemoving=True
+        t.seth(30)
+        t.forward(50)
+        t.seth(210)
+        t.forward(50)
+        t.seth(270)
+        t.forward(50)
+        turtlemoving=False
+    if times==5:
+        turtlemoving=True
+        t.seth(300)
+        t.forward(60)
+        t.seth(120)
+        t.forward(60)
+        turtlemoving=False
+    if times==6:
+        turtlemoving=True
+        t.seth(240)
+        t.forward(60)
+        t.penup()
+        t.goto(-130,100)
+        t.pendown()
+        t.seth(0)
+        t.circle(25,45)
+        t.penup()
+        t.seth(135)
+        t.forward(10)
+        t.pendown()
+        t.forward(30)
+        t.penup()
+        t.seth(0)
+        t.forward(21.2)
+        t.seth(225)
+        t.pendown()
+        t.forward(30)
+        turtlemoving=False
+        
+def determinecorrect(length,word,incorrectguesses,times,t):
+    global guess
+    correct=False
+    for x in range(length):
+        if word[x]==guess:
+            wordboard[x]=guess
+            correct=True
+    if correct==False:
+        times=times+1
+        incorrectboard[incorrectguesses]=guess
+        incorrectguesses=incorrectguesses+1
+        incorrect(times,t)
+    return incorrectguesses,times
+
+def getinfo(length,root):
+    info="Word:"
+    for x in range(length):
+        info=info+"[ "+wordboard[x]+" ]"
+    info2="Missed:"
+    for y in range(6):
+        info2=info2+"[ "+incorrectboard[y]+" ]"
+    return info,info2
+
+def printstatus(root,info,info2):
+    label1=Label(root,text=info,anchor="w",bg="white")
+    label1.place(height=50,width=350,x=250,y=50)
+    label2=Label(root,text=info2,anchor="w",bg="white")
+    label2.place(height=50,width=350,x=250,y=100)
+    
+def checkstatus(length,word):
+    finish=True
+    for x in range(length):
+        if wordboard[x]==" ":
+            finish=False
+    if finish==True:
+        word="You Win, the correct word is "+word
+        messagebox.showinfo("Game finished",word)
+    if incorrectboard[5]!=" " and finish==False:
+        finish=True
+        word="You loose, the correct word is "+word
+        messagebox.showinfo("Game finished",word)
+    return finish
+           
+def boards(length):
+    global wordboard
+    global incorrectboard
+    wordboard=[" " for x in range(length)]
+    incorrectboard=[" " for y in range(6)]
+
+def loadtk():
+    global cv
+    root=Tk()
+    root.title("Hangman Game")
+    cv=Canvas(root,width=600,height=500)
+    cv.pack()
+    t=RawTurtle(TurtleScreen(cv))
+    button=Button(root,text='restart')
+    button.place(height=40,width=60,x=540,y=10)
+    button.bind("<Button-1>",restart)
+    return t,root
+
+def inputguess():
+    for i in range(97,123):
+        if i<106:
+            xcoor=240+40*(i-97)
+            ycoor=260
+        elif i<114:
+            xcoor=260+40*(i-106)
+            ycoor=300
+        else:
+            xcoor=240+40*(i-114)
+            ycoor=340
+        button=Button(root,text=chr(i))
+        button.place(height=30,width=30,x=xcoor,y=ycoor)
+        button.bind("<Button-1>",letterbutton)
+
+def letterbutton(event):
+    global guess
+    global length
+    global word
+    global incorrectguesses
+    global times
+    global root
+    global t
+    global turtlemoving
+    guess=event.widget['text']
+    if event.widget['state']!='disabled' and turtlemoving==False:
+        event.widget['state']='disabled'
+        event.widget['bd']=0
+        event.widget['bg']='white'
+        incorrectguesses,times=determinecorrect(length,word,incorrectguesses,times,t)
+        info,info2=getinfo(length,root)
+        printstatus(root,info,info2)
+        finish=checkstatus(length,word)
+
+def restart(event):
+    t.reset()
+    mainrestart()
+
+def mainrestart():
+    global length
+    global word
+    global incorrectguesses
+    global times
+    global root
+    global t
+    inputguess()
+    hanger(t)
+    length,word,incorrectguesses,times=init()
+    boards(length)
+    info,info2=getinfo(length,root)
+    printstatus(root,info,info2)
+
+
+def main():
+    global length
+    global word
+    global incorrectguesses
+    global times
+    global root
+    global t
+    t,root=loadtk()
+    hanger(t)
+    length,word,incorrectguesses,times=init()
+    boards(length)
+    info,info2=getinfo(length,root)
+    printstatus(root,info,info2)
+    inputguess()
+
+main()
+root.mainloop()
